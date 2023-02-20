@@ -1018,7 +1018,7 @@ function flash_flashrom() {
 		elif [[ "${CHIP}" == "ite_spi" ||
 		        "${CHIP}" == "ite_spi_ccd_i2c" ||
 			"${CHIP}" == "it8xxx2" ]]; then
-			SPI_VOLTAGE="pp1800"
+			SPI_VOLTAGE="pp3300"
 		else
 			SPI_VOLTAGE="pp3300"
 		fi
