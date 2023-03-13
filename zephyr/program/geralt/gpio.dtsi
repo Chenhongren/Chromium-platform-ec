@@ -73,8 +73,7 @@
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		ec_ap_hid_int_odl: ec-ap-hid-int-odl {
-			gpios = <&gpioi 3 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8 |
-					   GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioi 3 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_flash_wp_odl: ec-flash-wp-odl {
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -190,6 +189,8 @@
 			<&gpiod 2 GPIO_INPUT>,
 			/* CHARGE_EN DNS */
 			<&gpioe 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
 			/* spi_clk_gpg6 */
 			<&gpiog 6 GPIO_INPUT_PULL_UP>,
 			/* spi_mosi_gpg4 */
@@ -202,9 +203,6 @@
 			 * EC_AP_RSVD0_ODL
 			 */
 			<&gpioh 0 GPIO_INPUT>,
-			/* h5,h6: uart base tx/rx */
-			<&gpioh 5 GPIO_INPUT>,
-			<&gpioh 6 GPIO_INPUT>,
 			<&gpiom 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
 			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
 	};
@@ -237,4 +235,28 @@
 	shi_cs_gpm5_default: shi_cs_gpm5_default {
 		gpio-voltage = "1v8";
 	};
+	uart2_rx_gph5: uart2_rx_gph5 {
+		pinmuxs = <&pinctrlh 5 IT8XXX2_ALT_FUNC_3>;
+	};
+	uart2_tx_gph6: uart2_tx_gph6 {
+		pinmuxs = <&pinctrlh 6 IT8XXX2_ALT_FUNC_3>;
+	};
+};
+
+&uart2 {
+	status = "okay";
+	current-speed = <115200>;
+	clock-frequency = <1804800>;
+
+	one_wire_uart: one-wire-uart {
+		compatible = "cros-ec,one-wire-uart";
+		id = <2>;
+	};
+};
+
+&ite_uart2_wrapper {
+	status = "okay";
+	pinctrl-0 = <&uart2_rx_gph5
+		     &uart2_tx_gph6>;
+	pinctrl-names = "default";
 };

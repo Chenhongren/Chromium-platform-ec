@@ -169,7 +169,7 @@ static int elan_tp_write_cmd(uint16_t reg, uint16_t val)
 /* Power is on by default. */
 static int elan_tp_power = 1;
 
-static int elan_tp_set_power(int enable)
+int elan_tp_set_power(int enable)
 {
 	int rv;
 	uint16_t val;

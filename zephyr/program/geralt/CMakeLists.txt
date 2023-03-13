@@ -24,7 +24,11 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 )
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DETACHABLE_BASE
 			"src/base_detect.c"
+			"src/one_wire.c"
+			"src/hid_over_i2c_target.c"
 )
+
+zephyr_include_directories("include")
 
 if(DEFINED CONFIG_BOARD_GERALT)
 	project(geralt)
