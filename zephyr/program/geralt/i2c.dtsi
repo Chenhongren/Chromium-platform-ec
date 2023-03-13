@@ -143,4 +143,9 @@
 		     &i2c4_data_gpe7_default>;
 	pinctrl-names = "default";
 	prescale-scl-low = <1>;
+
+	target-enable;
+	hid_i2c_target: hid-i2c-target@56 {
+		reg = <0x56>;
+	};
 };
