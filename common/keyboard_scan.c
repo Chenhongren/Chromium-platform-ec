@@ -552,8 +552,10 @@ test_mockable_static void key_state_changed(int row, int col, uint8_t state)
 	keyboard_state_changed(row, col, !!(state & BIT(row)));
 }
 
+#ifndef CONFIG_USB_HID_KEYBOARD
 /* TODO: move this to common header */
 void detachable_keyboard_add(const uint8_t *state);
+#endif
 
 /**
  * Update keyboard state using low-level interface to read keyboard.
@@ -668,8 +670,10 @@ static int check_keys_changed(uint8_t *state)
 		mkbp_keyboard_add(state);
 #endif
 
+#ifndef CONFIG_USB_HID_KEYBOARD
 #ifdef CONFIG_BOARD_ROACH
 		detachable_keyboard_add(state);
+#endif
 #endif
 	}
 

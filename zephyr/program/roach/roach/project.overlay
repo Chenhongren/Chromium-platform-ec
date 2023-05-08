@@ -12,3 +12,4 @@
 #include "../keyboard.dtsi"
 #include "../pwm.dtsi"
 #include "../rwsig.dtsi"
+#include "../usb.dtsi"
