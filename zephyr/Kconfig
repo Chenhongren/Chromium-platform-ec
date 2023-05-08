@@ -79,6 +79,7 @@ rsource "Kconfig.throttle_ap"
 rsource "Kconfig.touchpad"
 rsource "Kconfig.usba"
 rsource "Kconfig.usbc"
+rsource "Kconfig.usb_dc"
 rsource "Kconfig.watchdog"
 rsource "Kconfig.wireless_charger"
 

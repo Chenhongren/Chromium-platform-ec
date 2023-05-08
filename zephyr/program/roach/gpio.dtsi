@@ -136,10 +136,6 @@
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
 			/* gpioh3 */
 			<&gpioh 3 GPIO_INPUT_PULL_DOWN>,
-			/* TODO: gpioh5: EC_USB2_N */
-			<&gpioh 5 GPIO_INPUT_PULL_DOWN>,
-			/* TODO: gpioh6: EC_USB2_P */
-			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
 
 			/* gpioi0 */
 			<&gpioi 0 GPIO_INPUT_PULL_DOWN>,
