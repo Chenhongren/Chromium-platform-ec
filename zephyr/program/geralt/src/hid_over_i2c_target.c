@@ -2,8 +2,11 @@
 #include <zephyr/kernel.h>
 #include <string.h>
 
+#include "console.h"
 #include "hid_i2c.h"
 #include "usb_hid_touchpad.h"
+#include "hooks.h"
+#include "drivers/cros_one_wire_uart.h"
 
 struct i2c_target_dev_config {
 	/* I2C alternate configuration */
@@ -18,6 +21,7 @@ struct i2c_target_data {
 };
 
 extern struct k_msgq touchpad_report_queue;
+extern struct k_msgq usb_updater_queue;
 
 const static struct device *one_wire_uart = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
@@ -25,7 +29,9 @@ static int hid_handler(const uint8_t *in, int in_size, uint8_t *out)
 {
 	static int in_reset = true;
 
-	memset(out, 0, CONFIG_I2C_TARGET_MAX_BUFFER_SIZE);
+	/*
+	memset(out, 0, 96);
+	*/
 
 	if (in_size == 0) { /* read report */
 		if (!in_reset) {
@@ -33,7 +39,7 @@ static int hid_handler(const uint8_t *in, int in_size, uint8_t *out)
 
 			ret = k_msgq_get(&touchpad_report_queue, out + 2, K_NO_WAIT);
 			if (ret == 0) {
-				*(uint16_t*)out = sizeof(struct usb_hid_touchpad_report);
+				*(int16_t*)out = sizeof(struct usb_hid_touchpad_report);
 			}
 
 			if (k_msgq_num_used_get(&touchpad_report_queue) == 0) {
@@ -43,6 +49,8 @@ static int hid_handler(const uint8_t *in, int in_size, uint8_t *out)
 			return (ret ? 0 : sizeof(struct usb_hid_touchpad_report)) + 2;
 		} else {
 			/* first report after reset is always [0x00, 0x00] */
+			out[0] = 0;
+			out[1] = 0;
 			in_reset = false;
 			return 2;
 		}
@@ -67,6 +75,20 @@ static int hid_handler(const uint8_t *in, int in_size, uint8_t *out)
 		return 0;
 	}
 
+	if (reg == 0x10) { /* usb updater tunnel */
+		cros_one_wire_uart_send(one_wire_uart, ROACH_CMD_UPDATER_COMMAND, in + 1, in_size - 1);
+		return 0;
+	}
+
+	if (reg == 0x11) {
+		int ret = k_msgq_get(&usb_updater_queue, out, K_NO_WAIT);
+		if (ret < 0) {
+			out[0] = 0;
+		}
+
+		return ret ? 1 : out[0] + 1;
+	}
+
 	return 0;
 }
 
@@ -88,19 +110,22 @@ static void hid_i2c_target_buf_write_received(struct i2c_target_config *config,
 
 	memcpy(data->write_buf, ptr, len);
 	data->write_buf_len = len;
-	return 0;
 }
 
 static int hid_i2c_target_buf_read_requested(struct i2c_target_config *config,
 					     uint8_t **ptr, uint32_t *len)
 {
 	struct i2c_target_data *data = CONTAINER_OF(config, struct i2c_target_data, config);
-	int out_len = hid_handler(data->write_buf, data->write_buf_len, data->read_buf);
+	int ret = hid_handler(data->write_buf, data->write_buf_len, data->read_buf);
 
 	data->write_buf_len = 0;
-	*ptr = data->read_buf;
-	*len = out_len;
 
+	if (ret < 0) {
+		return ret;
+	}
+
+	*ptr = data->read_buf;
+	*len = ret;
 	return 0;
 }
 
@@ -150,12 +175,12 @@ static int hid_i2c_target_init(const struct device *dev)
 /* TODO: migrate to instance based api */
 
 static const struct i2c_target_dev_config i2c_target_cfg = {
-	.bus = I2C_DT_SPEC_GET(DT_NODELABEL(i2c5_target)),
+	.bus = I2C_DT_SPEC_GET(DT_NODELABEL(hid_i2c_target)),
 };
 
 static struct i2c_target_data i2c_target_data;
 
-I2C_DEVICE_DT_DEFINE(DT_NODELABEL(i2c5_target), hid_i2c_target_init,
+I2C_DEVICE_DT_DEFINE(DT_NODELABEL(hid_i2c_target), hid_i2c_target_init,
 			  NULL,
 			  &i2c_target_data,
 			  &i2c_target_cfg,
