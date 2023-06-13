@@ -99,7 +99,7 @@
 #define ETP_FW_IAP_PAGE_ERR BIT(5)
 #define ETP_FW_IAP_INTF_ERR BIT(4)
 
-#ifdef CONFIG_USB_UPDATE
+#if defined(CONFIG_USB_UPDATE) || 1
 /* The actual FW_SIZE depends on IC. */
 #define FW_SIZE CONFIG_TOUCHPAD_VIRTUAL_SIZE
 #endif
@@ -518,7 +518,7 @@ out:
 }
 DECLARE_DEFERRED(elan_tp_init);
 
-#ifdef CONFIG_USB_UPDATE
+#if defined(CONFIG_USB_UPDATE) || 1
 int touchpad_get_info(struct touchpad_info *tp)
 {
 	int rv;
@@ -624,7 +624,11 @@ static int touchpad_update_page(const uint8_t *data)
 
 	for (i = 0; i < elan_tp_params.page_size; i += 2)
 		checksum += ((uint16_t)(data[i + 1]) << 8) | (data[i]);
+#ifdef CONFIG_ZEPHYR
+	checksum = sys_cpu_to_le16(checksum);
+#else
 	checksum = htole16(checksum);
+#endif
 
 	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 

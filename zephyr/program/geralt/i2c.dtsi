@@ -145,7 +145,7 @@
 	prescale-scl-low = <1>;
 
 	target-enable;
-	i2c5_target: target@56 {
+	hid_i2c_target: hid-i2c-target@56 {
 		reg = <0x56>;
 	};
 };

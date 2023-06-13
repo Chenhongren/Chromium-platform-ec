@@ -17,7 +17,10 @@
 #include "drivers/cros_one_wire_uart.h"
 #include "usb_hid_touchpad.h"
 
+#define UPDATER_RESPONSE_SIZE_MAX 64
+
 K_MSGQ_DEFINE(touchpad_report_queue, sizeof(struct usb_hid_touchpad_report), 16, 4);
+K_MSGQ_DEFINE(usb_updater_queue, UPDATER_RESPONSE_SIZE_MAX, 16, 4);
 
 const static struct device *one_wire_uart = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
@@ -27,8 +30,18 @@ void board_process_packet(const struct RoachMessage *msg)
 		mkbp_keyboard_add(msg->payload);
 	}
 	if (msg->header.cmd == ROACH_CMD_TOUCHPAD_REPORT) {
-		k_msgq_put(&touchpad_report_queue, msg->payload, K_NO_WAIT);
+		k_msgq_put(&touchpad_report_queue, msg->payload, K_MSEC(1));
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_hid_int_odl), 0);
+	}
+	if (msg->header.cmd == ROACH_CMD_UPDATER_COMMAND) {
+		uint8_t buf[UPDATER_RESPONSE_SIZE_MAX];
+
+		if (msg->header.payload_len >= UPDATER_RESPONSE_SIZE_MAX) {
+			return;
+		}
+		buf[0] = msg->header.payload_len;
+		memcpy(buf + 1, msg->payload, msg->header.payload_len);
+		k_msgq_put(&usb_updater_queue, buf, K_MSEC(1));
 	}
 }
 
@@ -56,7 +69,7 @@ static int ec_ec_comm_init(void)
 
 	cros_one_wire_uart_enable(one_wire_uart);
 
-	i2c_target_driver_register(DEVICE_DT_GET(DT_NODELABEL(i2c5_target)));
+	i2c_target_driver_register(DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target)));
 
 	/* UART1PMR */
 	*(volatile uint8_t*)0xf03a23 = 1;
@@ -71,3 +84,29 @@ static int ec_ec_comm_init(void)
 	return 0;
 }
 SYS_INIT(ec_ec_comm_init, APPLICATION, 1);
+
+static int byte_remain = 0;
+
+void fw_update_hook(void);
+DECLARE_DEFERRED(fw_update_hook);
+void fw_update_hook(void)
+{
+	static uint8_t buf[200];
+
+	if (byte_remain % 1000 == 0) {
+		ccprints("fw_update %d", byte_remain);
+	}
+	cros_one_wire_uart_send(one_wire_uart, ROACH_CMD_UPDATER_COMMAND, buf, sizeof(buf));
+	byte_remain -= sizeof(buf);
+	if (byte_remain > 0) {
+		hook_call_deferred(&fw_update_hook_data, 0);
+	}
+}
+
+int fw_update_test(int argc, const char **argv)
+{
+	byte_remain = 100000; /* 100KB */
+	hook_call_deferred(&fw_update_hook_data, 0);
+	return 0;
+}
+DECLARE_CONSOLE_COMMAND(test, fw_update_test, "", "");
