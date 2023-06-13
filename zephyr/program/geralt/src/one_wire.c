@@ -18,7 +18,10 @@
 #include "usb_hid_touchpad.h"
 #include "roach_cmds.h"
 
+#define UPDATER_RESPONSE_SIZE_MAX 64
+
 K_MSGQ_DEFINE(touchpad_report_queue, sizeof(struct usb_hid_touchpad_report), 16, 4);
+K_MSGQ_DEFINE(usb_updater_queue, UPDATER_RESPONSE_SIZE_MAX, 16, 4);
 
 const static struct device *one_wire_uart = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
@@ -30,6 +33,16 @@ void board_process_packet(uint8_t cmd, uint8_t *payload, int length)
 	if (cmd == ROACH_CMD_TOUCHPAD_REPORT) {
 		k_msgq_put(&touchpad_report_queue, payload, K_NO_WAIT);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_hid_int_odl), 0);
+	}
+	if (cmd == ROACH_CMD_UPDATER_COMMAND) {
+		uint8_t buf[UPDATER_RESPONSE_SIZE_MAX];
+
+		if (length >= UPDATER_RESPONSE_SIZE_MAX) {
+			return;
+		}
+		buf[0] = length;
+		memcpy(buf + 1, payload, length);
+		k_msgq_put(&usb_updater_queue, buf, K_MSEC(1));
 	}
 }
 
