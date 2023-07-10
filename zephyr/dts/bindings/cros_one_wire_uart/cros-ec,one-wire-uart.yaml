@@ -1,0 +1,16 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: WIP
+
+compatible: "cros-ec,one-wire-uart"
+
+include: base.yaml
+
+properties:
+  id:
+    type: int
+    required: true
+    description: |
+      <WIP>
