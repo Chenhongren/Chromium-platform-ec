@@ -20,4 +20,16 @@ bool check_usb_is_configured(void);
  */
 bool request_usb_wake(void);
 
+/**
+ * @brief Check if usb hid boot protocol is set
+ *
+ * @return true if boot protocol is set, false otherwise
+ */
+bool boot_proto_is_set(void);
+
+/**
+ * @brief Callback function for usb hid protocol change
+ */
+void protocol_cb(const struct device *dev, uint8_t protocol);
+
 #endif

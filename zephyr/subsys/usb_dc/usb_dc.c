@@ -19,6 +19,7 @@ LOG_MODULE_DECLARE(usb_dc, LOG_LEVEL_INF);
 struct usb_controller_status {
 	bool suspended;
 	bool configured;
+	bool boot_protocol;
 };
 
 struct usb_controller_status usb_dc_status;
@@ -29,6 +30,7 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 	case USB_DC_RESET:
 		usb_dc_status.configured = false;
 		usb_dc_status.suspended = false;
+		usb_dc_status.boot_protocol = false;
 		break;
 	case USB_DC_CONFIGURED:
 		usb_dc_status.configured = true;
@@ -65,6 +67,20 @@ bool request_usb_wake(void)
 		return usb_dc_status.suspended ? false : true;
 	}
 	return false;
+}
+
+void protocol_cb(const struct device *dev, uint8_t protocol)
+{
+	ARG_UNUSED(dev);
+	LOG_DBG("new protocol %s\n",
+		(protocol == HID_PROTOCOL_BOOT) ? "boot" : "report");
+	usb_dc_status.boot_protocol = (protocol == HID_PROTOCOL_BOOT) ? true :
+									false;
+}
+
+bool boot_proto_is_set(void)
+{
+	return usb_dc_status.boot_protocol;
 }
 
 static int usb_dc_init(void)
