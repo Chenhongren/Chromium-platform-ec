@@ -9,6 +9,7 @@
 #include "queue.h"
 #include "task.h"
 #include "usb_dc.h"
+#include "usb_hid.h"
 
 #include <errno.h>
 
@@ -96,28 +97,29 @@ static const struct action_key_config action_key[] = {
 /* TK_* is 1-indexed, so the next bit is at ARRAY_SIZE(action_key) - 1 */
 static const int SLEEP_KEY_MASK = BIT(ARRAY_SIZE(action_key) - 1);
 
-/* TODO: How the feature report work? Is it required? */
-#if 0
+#define REPORT_ID_1 0x01
+
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
-static uint32_t feature_report[CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS];
+#define FEATURE_REPORT_SIZE \
+	sizeof(uint32_t) * CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS + 1
+static uint8_t feature_report[FEATURE_REPORT_SIZE];
 
 static void hid_keyboard_feature_init(void)
 {
 	const struct ec_response_keybd_config *config =
 		board_vivaldi_keybd_config();
 
+	feature_report[0] = REPORT_ID_1;
 	for (int i = 0; i < CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS; i++) {
 		int key = config->action_keys[i];
 
 		if (IN_RANGE(key, 0, ARRAY_SIZE(action_key) - 1))
-			feature_report[i] = action_key[key].usage;
+			memcpy(feature_report + i * sizeof(uint32_t) + 1,
+			       &action_key[key].usage, sizeof(uint32_t));
 	}
 }
 DECLARE_HOOK(HOOK_INIT, hid_keyboard_feature_init, HOOK_PRIO_DEFAULT - 1);
 #endif
-#endif
-
-#define REPORT_ID_1 0x01
 
 #define KEYBOARD_BASE_DESC                                                    \
 	HID_USAGE_PAGE(HID_USAGE_GEN_DESKTOP),                                \
@@ -313,8 +315,13 @@ struct usb_hid_keyboard_report {
 #endif
 } __packed;
 
+static int kb_get_report(const struct device *dev,
+			 struct usb_setup_packet *setup, int32_t *len,
+			 uint8_t **data);
+
 static const struct hid_ops ops = {
 	.protocol_change = protocol_cb,
+	.get_report = kb_get_report,
 };
 
 static struct queue const report_queue =
@@ -323,6 +330,35 @@ static struct k_mutex *report_queue_mutex;
 static struct usb_hid_keyboard_report report;
 
 static const struct device *hid_dev;
+
+static int kb_get_report(const struct device *dev,
+			 struct usb_setup_packet *setup, int32_t *len,
+			 uint8_t **data)
+{
+	/* The wValue field specifies the report id in the low byte*/
+	if ((setup->wValue & 0xFF) != REPORT_ID_1) {
+		LOG_ERR("unknown report id");
+		return -ENOTSUP;
+	}
+
+	/* The report type is in the high byte */
+	switch ((setup->wValue & 0xFF00) >> 8) {
+	case REPORT_TYPE_INPUT:
+		*data = (uint8_t *)&report;
+		*len = sizeof(report);
+		return 0;
+	case REPORT_TYPE_FEATURE:
+#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
+		*data = (uint8_t *)feature_report;
+		*len = FEATURE_REPORT_SIZE;
+		return 0;
+#endif
+	case REPORT_TYPE_OUTPUT:
+	default:
+		break;
+	}
+	return -ENOTSUP;
+}
 
 static uint32_t maybe_convert_function_key(int keycode)
 {
