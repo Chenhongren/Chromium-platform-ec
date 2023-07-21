@@ -1,0 +1,30 @@
+config PLATFORM_EC_TOUCHPAD_HASH_FW
+	bool "Include hashes of the touchpad FW in the EC image"
+	depends on PLATFORM_EC_TOUCHPAD
+	help
+	  Include hashes of the touchpad FW in the EC image.
+
+	  User can provide the firmware image by passing a TOUCHPAD_FW parameter
+	  to the make command, e.g. `zmake build -DTOUCHPAD_FW=/path/to/fw ...`.
+
+if PLATFORM_EC_TOUCHPAD_HASH_FW
+
+config PLATFORM_EC_TOUCHPAD_VIRTUAL_OFF
+	hex "Touchpad virtual offset"
+	help
+	  Touchpad virtual address for the USB update protocol.
+
+config PLATFORM_EC_TOUCHPAD_VIRTUAL_SIZE
+	int "Touchpad virtual size"
+	help
+	  Touchpad virtual size for the USB update protocol, must equal to the
+	  size of TOUCHPAD_FW if provided.
+
+endif # PLATFORM_EC_TOUCHPAD_HASH_FW
+
+config PLATFORM_EC_UPDATE_PDU_SIZE
+	int "PDU size for firmware update over USB or TPM"
+	help
+	  Size of the update protocol data units (PDU).
+
+	  See docs/usb_updater.md.
