@@ -1,0 +1,43 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_USB_HID_KEYBOARD
+	bool "Enable support USB HID keyboard"
+	default n
+	help
+	  Enable keyboard support.
+
+config PLATFORM_EC_HID_VIVALDI
+	bool "Enable support vivaldi keyboard"
+	depends on PLATFORM_EC_USB_HID_KEYBOARD
+	default n
+	help
+	  Enable code for Vivaldi keyboard (standard for new Chromium OS
+	  devices).
+
+config PLATFORM_EC_KEYBOARD_ASSISTANT_KEY
+	bool "Enable support USB HID touchpad"
+	depends on PLATFORM_EC_USB_HID_KEYBOARD
+	default n
+	help
+	  Enable assistant key for keyboard device.
+
+config PLATFORM_EC_KEYBOARD_TABLET_MODE_SWITCH
+	bool "Enable support USB HID touchpad"
+	depends on PLATFORM_EC_USB_HID_KEYBOARD
+	default n
+	help
+	  Enable tablet mode switch for keyboard device.
+
+config PLATFORM_EC_KEYBOARD_NUM_TOP_ROW_KEYS
+	int "Enable support vivaldi keyboard"
+	default 10
+	help
+	  The number of top raw keys. The number should be within 10 to 15.
+
+config PLATFORM_EC_USB_HID_TOUCHPAD
+	bool "Enable support USB HID touchpad"
+	default n
+	help
+	  Enable touchpad support.
