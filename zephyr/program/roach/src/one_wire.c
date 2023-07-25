@@ -323,20 +323,20 @@ static int ec_ec_comm_init(void)
 }
 SYS_INIT(ec_ec_comm_init, APPLICATION, 50);
 
+/* Disable this function if keyboard reports are sent through usb hid interface
 void keyboard_state_changed(int row, int col, int is_pressed)
 {
 }
+*/
 
 void detachable_keyboard_add(const uint8_t *state)
 {
 	cros_one_wire_uart_send(one_wire_uart, ROACH_CMD_KEYBOARD_MATRIX, state, KEYBOARD_COLS_MAX);
 }
 
-void board_touchpad_reset(void)
-{
-}
-
+/* Disable this function if touchpad reports are sent through usb hid interface
 void set_touchpad_report(struct usb_hid_touchpad_report *report)
 {
 	cros_one_wire_uart_send(one_wire_uart, ROACH_CMD_TOUCHPAD_REPORT, (uint8_t*)report, sizeof(*report));
 }
+*/
