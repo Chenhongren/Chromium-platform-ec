@@ -11,4 +11,9 @@ void touchpad_interrupt(enum gpio_signal signal);
 /* Reset the touchpad, mainly used to recover it from malfunction. */
 void board_touchpad_reset(void);
 
+#ifdef CONFIG_USB_DC_HID_TOUCHPAD
+void usb_dc_tp_init(int max_x, int max_y, int physical_x, int physical_y,
+		    int max_pressure);
+#endif
+
 #endif

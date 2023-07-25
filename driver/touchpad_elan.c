@@ -500,6 +500,13 @@ static void elan_tp_init(void)
 	}
 #endif
 
+#ifdef CONFIG_USB_DC_HID_TOUCHPAD
+	usb_dc_tp_init(elan_tp_params.max_x, elan_tp_params.max_y,
+		       calc_physical_dimension(dpi_x, elan_tp_params.max_x),
+		       calc_physical_dimension(dpi_y, elan_tp_params.max_y),
+		       DT_PROP_OR(TP_NODE, max_pressure, 0));
+#endif
+
 	/* Switch to absolute mode */
 	rv = elan_tp_write_cmd(ETP_I2C_SET_CMD, ETP_ENABLE_ABS);
 	if (rv)

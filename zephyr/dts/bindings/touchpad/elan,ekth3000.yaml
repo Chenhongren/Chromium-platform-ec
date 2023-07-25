@@ -13,3 +13,6 @@ properties:
     type: phandle
     required: true
     description: Interrupt from touchpad
+  max_pressure:
+    type: int
+    description: The max pressure for touchpad
