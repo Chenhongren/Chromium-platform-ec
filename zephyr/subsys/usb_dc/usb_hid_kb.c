@@ -19,6 +19,12 @@
 #include <zephyr/usb/usb_device.h>
 LOG_MODULE_DECLARE(usb_hid_kb, LOG_LEVEL_INF);
 
+BUILD_ASSERT(CONFIG_USB_DC_KEYBOARD_HID_NUM < CONFIG_USB_HID_DEVICE_COUNT,
+	     "The hid number of keyboard is invaild.");
+#define KB_DEV_NAME                 \
+	(CONFIG_USB_HID_DEVICE_NAME \
+	 "_" STRINGIFY(CONFIG_USB_DC_KEYBOARD_HID_NUM))
+
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
 #define HID_KEYBOARD_MODIFIER_HIGH 0xe7
 
@@ -360,7 +366,7 @@ static void hid_kb_proc_queue(void)
 
 static int usb_hid_kb_init(void)
 {
-	hid_dev = device_get_binding("HID_0");
+	hid_dev = device_get_binding(KB_DEV_NAME);
 	if (!hid_dev) {
 		LOG_ERR("failed to get hid device");
 		return -ENXIO;

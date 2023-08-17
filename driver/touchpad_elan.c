@@ -28,6 +28,7 @@
 #include "usb_hid_touchpad.h"
 #include "util.h"
 #include "watchdog.h"
+#include "zephyr/subsys/usb_dc/usb_dc.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_TOUCHPAD, outstr)
@@ -140,12 +141,38 @@ struct {
 const int pressure_mult = 3216;
 const int pressure_div = 1024;
 
+// #define ETP_I2C_DESC_CMD		0x0001
+// #define ETP_I2C_DESC_LENGTH		30
+// static uint8_t desc[ETP_I2C_DESC_LENGTH];
+// #define ETP_I2C_REPORT_DESC_CMD 0x0002
+// #define ETP_I2C_REPORT_DESC_LENGTH 158
+// static uint8_t report_desc[ETP_I2C_REPORT_DESC_LENGTH];
+#define ETP_I2C_INPUT_CMD 0x0003
+#define ETP_I2C_INPUT_LENGTH 0x22
+// static uint8_t input[ETP_I2C_INPUT_LENGTH];
+
 static int elan_tp_read_cmd(uint16_t reg, uint16_t *val)
 {
 	uint8_t buf[2];
 
 	buf[0] = reg;
 	buf[1] = reg >> 8;
+
+	// if (reg == ETP_I2C_DESC_CMD) {
+	// 	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT,
+	// 			CONFIG_TOUCHPAD_I2C_ADDR_FLAGS, buf, sizeof(buf),
+	// 			(uint8_t *)val, ETP_I2C_DESC_LENGTH);
+	// }
+	// if (reg == ETP_I2C_REPORT_DESC_CMD) {
+	// 	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT,
+	// 			CONFIG_TOUCHPAD_I2C_ADDR_FLAGS, buf, sizeof(buf),
+	// 			(uint8_t *)val, ETP_I2C_REPORT_DESC_LENGTH);
+	// }
+	// if (reg == ETP_I2C_INPUT_CMD) {
+	// 	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT,
+	// 			CONFIG_TOUCHPAD_I2C_ADDR_FLAGS, buf, sizeof(buf),
+	// 			(uint8_t *)val, ETP_I2C_INPUT_LENGTH);
+	// }
 
 	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT,
 			CONFIG_TOUCHPAD_I2C_ADDR_FLAGS, buf, sizeof(buf),
@@ -296,6 +323,66 @@ static int elan_tp_read_report(void)
 	}
 
 	set_touchpad_report(&report);
+
+	// #define ETP_I2C_DESC_CMD		0x0001
+// #define ETP_I2C_DESC_LENGTH		30
+// uint8_t desc[ETP_I2C_DESC_LENGTH];
+// 	printk("================ [Before] ITE Debug desc cmd ================\n");
+// 	for (int i = 0; i < ETP_I2C_DESC_LENGTH; i++) {
+// 		if (i % 16 == 0) printk("\n");
+// 		printk("%x ", desc[i]);
+// 	}
+// 	printk("\n");
+// 	rv = elan_tp_read_cmd(ETP_I2C_DESC_CMD, (uint16_t *)desc);
+// 	if (rv) {
+// 		printk("ITE Debug - failed to read\n");
+// 	}
+
+// 	printk("================ [After] ITE Debug desc cmd ================\n");
+// 	for (int i = 0; i < ETP_I2C_DESC_LENGTH; i++) {
+// 		if (i % 16 == 0) printk("\n");
+// 		printk("%x ", desc[i]);
+// 	}
+// 	printk("\n");
+
+// // #define ETP_I2C_REPORT_DESC_CMD 0x0002
+// // #define ETP_I2C_REPORT_DESC_LENGTH 158
+// // 	uint8_t report_desc[ETP_I2C_REPORT_DESC_LENGTH];
+// 	printk("============= [Before] ITE Debug report desc cmd =============\n");
+// 	for (int i = 0; i < ETP_I2C_REPORT_DESC_LENGTH; i++) {
+// 		if (i % 16 == 0) printk("\n");
+// 		printk("%x ", report_desc[i]);
+// 	}
+// 	printk("\n");
+// 	rv = elan_tp_read_cmd(ETP_I2C_REPORT_DESC_CMD, (uint16_t *)report_desc);
+// 	if (rv) {
+// 		printk("ITE Debug - failed to read\n");
+// 	}
+// 	printk("============= [After] ITE Debug report desc cmd =============\n");
+// 	for (int i = 0; i < ETP_I2C_REPORT_DESC_LENGTH; i++) {
+// 		if (i % 16 == 0) printk("\n");
+// 		printk("%x ", report_desc[i]);
+// 	}
+// 	printk("\n");
+
+// 	printk("============= [Before] ITE Debug input cmd =============\n");
+// 	for (int i = 0; i < ETP_I2C_INPUT_LENGTH; i++) {
+// 		if (i % 16 == 0) printk("\n");
+// 		printk("%x ", input[i]);
+// 	}
+// 	printk("\n");
+// 	rv = elan_tp_read_cmd(ETP_I2C_INPUT_CMD, (uint16_t *)input);
+// 	if (rv) {
+// 		printk("ITE Debug - failed to read\n");
+// 	}
+// 	printk("============= [After] ITE Debug input cmd =============\n");
+// 	for (int i = 0; i < ETP_I2C_INPUT_LENGTH; i++) {
+// 		if (i % 16 == 0) printk("\n");
+// 		printk("%x ", input[i]);
+// 	}
+// 	printk("\n");
+
+
 
 	return 0;
 }
@@ -500,12 +587,12 @@ static void elan_tp_init(void)
 	}
 #endif
 
-#ifdef CONFIG_USB_DC_HID_TOUCHPAD
-	usb_dc_tp_init(elan_tp_params.max_x, elan_tp_params.max_y,
-		       calc_physical_dimension(dpi_x, elan_tp_params.max_x),
-		       calc_physical_dimension(dpi_y, elan_tp_params.max_y),
-		       DT_PROP_OR(TP_NODE, max_pressure, 0));
-#endif
+// #ifdef CONFIG_USB_DC_HID_TOUCHPAD
+// 	usb_dc_tp_init(elan_tp_params.max_x, elan_tp_params.max_y,
+// 		       calc_physical_dimension(dpi_x, elan_tp_params.max_x),
+// 		       calc_physical_dimension(dpi_y, elan_tp_params.max_y),
+// 		       DT_PROP_OR(TP_NODE, max_pressure, 0));
+// #endif
 
 	/* Switch to absolute mode */
 	rv = elan_tp_write_cmd(ETP_I2C_SET_CMD, ETP_ENABLE_ABS);
@@ -520,10 +607,44 @@ static void elan_tp_init(void)
 
 out:
 	CPRINTS("%s:%d", __func__, rv);
+	msleep(100);
 
 	return;
 }
 DECLARE_DEFERRED(elan_tp_init);
+
+#ifdef CONFIG_USB_DC_HID_TOUCHPAD
+int get_tp_report_desc_param(struct tp_report_desc_para *params)
+{
+	int dpi_x, dpi_y;
+	uint8_t val[2];
+
+	int rv = elan_i2c_get_pattern();
+	/* Read min/max */
+	rv = elan_tp_read_cmd(ETP_I2C_MAX_X_AXIS_CMD, &params->logical_max_x);
+	if (rv)
+		return -1;
+	rv = elan_tp_read_cmd(ETP_I2C_MAX_Y_AXIS_CMD, &params->logical_max_y);
+	if (rv)
+		return -1;
+
+	rv = elan_tp_read_cmd(ETP_I2C_RESOLUTION_CMD, (uint16_t *)val);
+	if (rv)
+		return -1;
+
+	if (elan_tp_params.pattern <= 0x01) {
+		dpi_x = 10 * val[0] + 790;
+		dpi_y = 10 * val[1] + 790;
+	} else {
+		dpi_x = (val[0] + 3) * 100;
+		dpi_y = (val[1] + 3) * 100;
+	}
+	params->physical_max_x = calc_physical_dimension(dpi_x, params->logical_max_x);
+	params->physical_max_y = calc_physical_dimension(dpi_y, params->logical_max_y);
+	params->logical_max_pressure = DT_PROP_OR(TP_NODE, max_pressure, 0);
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_USB_UPDATE
 int touchpad_get_info(struct touchpad_info *tp)

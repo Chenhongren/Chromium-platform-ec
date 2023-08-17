@@ -14,17 +14,16 @@
 #include <zephyr/usb/usb_device.h>
 LOG_MODULE_DECLARE(usb_hid_tp, LOG_LEVEL_INF);
 
+BUILD_ASSERT(CONFIG_USB_DC_TOUCHPAD_HID_NUM < CONFIG_USB_HID_DEVICE_COUNT,
+	     "The hid number of touchpad is invaild.");
+#define TP_DEV_NAME                 \
+	(CONFIG_USB_HID_DEVICE_NAME \
+	 "_" STRINGIFY(CONFIG_USB_DC_TOUCHPAD_HID_NUM))
+
 static const struct device *hid_dev;
 static struct queue const report_queue =
 	QUEUE_NULL(8, struct usb_hid_touchpad_report);
 static struct k_mutex *report_queue_mutex;
-
-/* Parameters for touchpad report descriptor */
-static int logical_max_x;
-static int logical_max_y;
-static int physical_max_x;
-static int physical_max_y;
-static int logical_max_pressure;
 
 /* A 256-byte default blob for the 'device certification status' feature report.
  */
@@ -299,7 +298,6 @@ static uint8_t device_caps_response[] = {
 
 static void hid_tp_proc_queue(void);
 DECLARE_DEFERRED(hid_tp_proc_queue);
-
 static void write_tp_report(struct usb_hid_touchpad_report *report)
 {
 	int ret = hid_int_ep_write(hid_dev, (uint8_t *)report, sizeof(*report),
@@ -399,6 +397,7 @@ static void hid_tp_proc_queue(void)
 	hook_call_deferred(&hid_tp_proc_queue_data, 1 * MSEC);
 }
 
+struct tp_report_desc_para params;
 static void register_hid_tp_device(void)
 {
 	uint8_t report_desc_header[6] = {
@@ -423,10 +422,10 @@ static void register_hid_tp_device(void)
 		HID_REPORT_COUNT(1),
 		HID_LOGICAL_MAX8(0x0F),
 		HID_INPUT(0x02),
-		HID_USAGE_PAGE(0x0D), /* Usage page: digitizer*/
+		HID_USAGE_PAGE(0x0D), /* Usage page: digitizer */
 		HID_USAGE(0x30), /* Usage: tip pressure */
-		HID_LOGICAL_MAX16(logical_max_pressure & 0xFF,
-				  logical_max_pressure >> 8),
+		HID_LOGICAL_MAX16(params.logical_max_pressure & 0xFF,
+				  params.logical_max_pressure >> 8),
 		HID_REPORT_SIZE(9),
 		HID_INPUT(0x02),
 		HID_LOGICAL_MAX16(0xFF, 0x0F),
@@ -441,12 +440,12 @@ static void register_hid_tp_device(void)
 		0x65, 0x11, /* Unit (system: SI linear, length: cm) */
 		HID_USAGE(HID_USAGE_GEN_DESKTOP_X), /* Usage: x-axis */
 		0x35, 0x00, /* Physical minimum (0) */
-		HID_LOGICAL_MAX16(logical_max_x & 0xFF, logical_max_x >> 8),
-		0x46, physical_max_x & 0xFF, physical_max_x >> 8,
+		HID_LOGICAL_MAX16(params.logical_max_x & 0xFF, params.logical_max_x >> 8),
+		0x46, params.physical_max_x & 0xFF, params.physical_max_x >> 8,
 		HID_INPUT(0x02),
 		HID_USAGE(HID_USAGE_GEN_DESKTOP_Y), /* Usage: y-axis */
-		HID_LOGICAL_MAX16(logical_max_y & 0xFF, logical_max_y >> 8),
-		0x46, physical_max_y & 0xFF, physical_max_y >> 8,
+		HID_LOGICAL_MAX16(params.logical_max_y & 0xFF, params.logical_max_y >> 8),
+		0x46, params.physical_max_y & 0xFF, params.physical_max_y >> 8,
 		HID_INPUT(0x02),
 		HID_END_COLLECTION
 	};
@@ -525,22 +524,22 @@ static void register_hid_tp_device(void)
 				&ops);
 }
 
-void usb_dc_tp_init(int max_x, int max_y, int physical_x, int physical_y,
-		    int max_pressure)
+static int usb_hid_tp_init(void)
 {
-	logical_max_x = max_x;
-	logical_max_y = max_y;
-	physical_max_x = physical_x;
-	physical_max_y = physical_y;
-	logical_max_pressure = max_pressure;
+	int ret = get_tp_report_desc_param(&params);
+	if (ret) {
+		return -ENXIO;
+	}
 
-	hid_dev = device_get_binding("HID_1");
+	hid_dev = device_get_binding(TP_DEV_NAME);
 	if (!hid_dev) {
 		LOG_ERR("failed to get hid device");
-		return;
+		return -ENXIO;
 	}
 
 	register_hid_tp_device();
 
 	usb_hid_init(hid_dev);
+	return 0;
 }
+SYS_INIT(usb_hid_tp_init, APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);

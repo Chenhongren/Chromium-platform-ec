@@ -38,5 +38,6 @@ struct usb_hid_touchpad_report {
 
 /* class implementation interfaces */
 void set_touchpad_report(struct usb_hid_touchpad_report *report);
+void set_touchpad_report_test(uint8_t *report);
 
 #endif

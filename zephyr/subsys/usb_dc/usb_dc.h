@@ -25,4 +25,14 @@ bool request_usb_wake(void);
 void usb_dc_tp_init(int max_x, int max_y, int physical_x, int physical_y,
             int max_pressure);
 
+struct tp_report_desc_para {
+    uint16_t logical_max_x;
+    uint16_t logical_max_y;
+    int physical_max_x;
+    int physical_max_y;
+    uint16_t logical_max_pressure;
+};
+int get_tp_report_desc_param(struct tp_report_desc_para *params);
+
+
 #endif

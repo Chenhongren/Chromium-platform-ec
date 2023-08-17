@@ -9,6 +9,14 @@ config USB_DC_HID_KEYBOARD
 	help
 	  Enable keyboard support.
 
+config USB_DC_KEYBOARD_HID_NUM
+	int "Set the HID number for keyboard instance name"
+	depends on USB_DC_HID_KEYBOARD
+	default 0
+	help
+	  Set the hid number for keyboard instance name.
+	  The format of hid instance name is name_n, where the name can be configured by CONFIG_USB_HID_DEVICE_NAME and n should be in the range of 0 to (CONFIG_USB_HID_DEVICE_COUNT - 1).
+
 config USB_DC_HID_VIVALDI
 	bool "Enable support vivaldi keyboard"
 	depends on USB_DC_HID_KEYBOARD
@@ -46,3 +54,11 @@ config USB_DC_HID_TOUCHPAD
 	default n
 	help
 	  Enable touchpad support.
+
+config USB_DC_TOUCHPAD_HID_NUM
+	int "Set the HID number for touchpad instance name"
+	depends on USB_DC_HID_TOUCHPAD
+	default 1
+	help
+	  Set the hid number for touchpad instance name.
+	  The format of hid instance name is name_n, where the name can be configured by CONFIG_USB_HID_DEVICE_NAME and n should be in the range of 0 to (CONFIG_USB_HID_DEVICE_COUNT - 1).
