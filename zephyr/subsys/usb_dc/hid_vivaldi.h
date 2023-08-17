@@ -48,7 +48,7 @@
 		HID_REPORT_COUNT(CONFIG_USB_DC_KEYBOARD_NUM_TOP_ROW_KEYS), \
 		HID_REPORT_SIZE(32), HID_FEATURE(0x03), HID_END_COLLECTION
 
-int32_t get_vivaldi_feature_report(uint8_t report_id, uint8_t *data);
+int32_t get_vivaldi_feature_report(uint8_t *data);
 uint32_t vivaldi_convert_function_key(int keycode);
 
 #endif /* __HID_VIVALDI_H */

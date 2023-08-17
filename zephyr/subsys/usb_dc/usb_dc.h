@@ -22,4 +22,7 @@ bool check_usb_is_configured(void);
  */
 bool request_usb_wake(void);
 
+void usb_dc_tp_init(int max_x, int max_y, int physical_x, int physical_y,
+            int max_pressure);
+
 #endif

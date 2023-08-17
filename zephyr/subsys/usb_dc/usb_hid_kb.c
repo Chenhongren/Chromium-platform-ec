@@ -19,8 +19,6 @@
 #include <zephyr/usb/usb_device.h>
 LOG_MODULE_DECLARE(usb_hid_kb, LOG_LEVEL_INF);
 
-#define REPORT_ID_KEYBOARD 0x01
-
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
 #define HID_KEYBOARD_MODIFIER_HIGH 0xe7
 
@@ -74,7 +72,9 @@ static const uint8_t hid_report_desc[] = {
 	HID_USAGE_PAGE(HID_USAGE_GEN_DESKTOP),
 	HID_USAGE(HID_USAGE_GEN_DESKTOP_KEYBOARD),
 	HID_COLLECTION(HID_COLLECTION_APPLICATION),
-	HID_REPORT_ID(REPORT_ID_KEYBOARD),
+	HID_REPORT_SIZE(1),
+	HID_REPORT_COUNT(8),
+	HID_INPUT(0x02),
 	HID_USAGE_PAGE(HID_USAGE_GEN_DESKTOP_KEYPAD),
 	HID_USAGE_MIN8(HID_KEYBOARD_MODIFIER_LOW),
 	HID_USAGE_MAX8(HID_KEYBOARD_MODIFIER_HIGH),
@@ -167,12 +167,6 @@ static int kb_get_report(const struct device *dev,
 			 struct usb_setup_packet *setup, int32_t *len,
 			 uint8_t **data)
 {
-	/* The wValue field specifies the report id in the low byte*/
-	if ((setup->wValue & 0xFF) != REPORT_ID_KEYBOARD) {
-		LOG_ERR("unknown report id");
-		return -ENOTSUP;
-	}
-
 	/* The report type is in the high byte */
 	switch ((setup->wValue & 0xFF00) >> 8) {
 	case REPORT_TYPE_INPUT:
@@ -181,7 +175,7 @@ static int kb_get_report(const struct device *dev,
 		return 0;
 	case REPORT_TYPE_FEATURE:
 #ifdef CONFIG_USB_DC_HID_VIVALDI
-		*len = get_vivaldi_feature_report(REPORT_ID_KEYBOARD, *data);
+		*len = get_vivaldi_feature_report(*data);
 		if (*len != 0) {
 			return 0;
 		}
@@ -280,7 +274,7 @@ static bool generate_keyboard_report(uint8_t keycode, int is_pressed)
 			report.byte_0.boot_modifiers = modifiers;
 			report.byte_1.reserved = 0x0;
 		} else {
-			report.byte_0.report_id = REPORT_ID_KEYBOARD;
+			report.byte_0.report_id = 0x0;
 			report.byte_1.report_modifiers = modifiers;
 		}
 	}

@@ -81,20 +81,19 @@ uint32_t vivaldi_convert_function_key(int keycode)
 	return action_key[config->action_keys[index]].mask;
 }
 
-int32_t get_vivaldi_feature_report(uint8_t report_id, uint8_t *data)
+int32_t get_vivaldi_feature_report(uint8_t *data)
 {
 	if (!data || !config) {
 		return 0;
 	}
 
-	data[0] = report_id;
 	for (int i = 0; i < config->num_top_row_keys; i++) {
 		int key = config->action_keys[i];
 
-		memcpy(data + i * sizeof(uint32_t) + 1, &action_key[key].usage,
+		memcpy(data + i * sizeof(uint32_t), &action_key[key].usage,
 		       sizeof(uint32_t));
 	}
-	return config->num_top_row_keys * sizeof(uint32_t) + 1;
+	return config->num_top_row_keys * sizeof(uint32_t);
 }
 
 static void hid_vivaldi_init(void)
