@@ -4,6 +4,10 @@
  */
 
 / {
+	aliases {
+		usb-hid-tp = &touchpad;
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
@@ -26,11 +30,16 @@
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
 
-	touchpad@15 {
+	touchpad: touchpad@15 {
 		compatible = "elan,ekth3000";
 		status = "okay";
 		reg = <0x15>;
 		irq = <&int_tchpad>;
+		logical_max_x = <2925>;
+		logical_max_y = <1440>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+		max_pressure = <511>;
 	};
 };
 
